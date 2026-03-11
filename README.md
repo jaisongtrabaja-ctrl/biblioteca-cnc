@@ -1,234 +1,189 @@
-# biblioteca-cnc
-Biblioteca de anotaciones CNC Fanuc, desbaste, rampas, radios y trigonometría aplicada.
 
-📘 BIBLIOTECA CNC – TORNO FANUC
-Guía práctica de desbaste, rampas, radios y trigonometría aplicada
+📘 GUÍA ORGANIZADA – CICLO G71, SOBREMATERIAL Y CÁLCULO DE CONO
+(Comparativo Control tipo Fanuc vs HNC)
 
-PARTE 1 — FUNDAMENTOS DEL TORNO CNC
-1. Cómo piensa un torno CNC
-Sistema de ejes
-En torno:
-X = Diámetro (NO radio)
-Z = Longitud
-Lógica correcta del eje Z
-Z0 → Cara frontal de la pieza
-Z negativo (-) → Hacia las mordazas (dentro del material)
-Z positivo (+) → Hacia el operador (fuera del material)
-Visualización:
-Z+   (afuera)
-Z0   ← Cara frontal
-Z-1
-Z-2
-Z-3
-Z-4
-Z-5
-Z-6  ← Más cerca de las mordazas
+1️⃣ IMPORTANCIA DEL MANUAL DE PROGRAMACIÓN
+Cada torno CNC tiene su propio manual.
+No importa si el control es tipo:
+Fanuc
+HNC
+Haas
+Mazak
+Siempre existen pequeñas variaciones en:
+Sintaxis de ciclos
+Parámetros obligatorios
+Códigos equivalentes
+Forma de declarar avances
+Conclusión técnica:
+Aunque ya sepas programar CNC,
+cuando llegues a una máquina nueva:
+Pide el manual.
+Revisa sintaxis de ciclos.
+Verifica diferencias en G71, G70, G76, etc.
+La base es la misma.
+La sintaxis puede variar.
 
-Corrección clave
-❌ El desbaste no es “de atrás hacia adelante”.
-✔ El desbaste longitudinal va de Z0 hacia valores negativos.
-
-2. Movimiento en X vs profundidad real
-Como X trabaja en diámetro:
-1 mm en X = 0.5 mm reales
-2 mm en X = 1 mm real
-4 mm en X = 2 mm reales
-Ejemplo
-De Ø40 a Ø28:
-40 − 28 = 12 mm en diámetro
-12 ÷ 2 = 6 mm de profundidad real
-
-PARTE 2 — GEOMETRÍA DE MOVIMIENTO
-3. Rampas (líneas inclinadas)
+2️⃣ ELECCIÓN DEL MATERIAL EN BRUTO
+Antes de programar, debes saber:
+Diámetro final mayor
+Longitud final
+Material disponible comercialmente
 Ejemplo:
-Inicio: X28 Z-5
-Fin: X12 Z-2
-Diferencias:
-16 mm en X (diámetro)
-3 mm en Z
-Eso es una línea recta inclinada.
-Se programa así:
-G01 X12 Z-2
-
-El control interpola automáticamente.
-
-4. Desbaste inclinado manual
-Si no usas G71:
-Divides X y Z proporcionalmente
-Avanzas parcialmente en ambos ejes
-⚠ No es un radio.
-Es aproximación controlada.
-Sirve para:
-Reducir carga
-Evitar vibración
-Preparar acabado
-
-5. Desbaste escalonado
-Ejemplo Ø40 a Ø28:
-X38
-X36
-X34
-...
-X28
-
-O combinado con Z:
-G01 X38
-G01 Z-12
-G01 X36
-G01 Z-11
-
-Eso genera escalones.
-⚠ Escalones ≠ radio real.
-
-PARTE 3 — RADIOS Y ARCOS
-6. Radios reales
-Un radio:
-No se divide
-No se hace por escalones
-Es una trayectoria circular exacta
-Ejemplo R5:
-G18
-G01 X40 Z-13
-G03 X30 Z-8 R5
-
-Reglas obligatorias
-Plano correcto → G18
-Punto inicial exacto
-Punto final exacto
-Sentido correcto → G02 o G03
-Si el punto inicial está mal → el radio sale mal.
-Si el sentido está mal → invade material.
-
-7. G02 vs G03 en torno
-En torno influyen:
-Plano activo
-Sentido de avance
-X en diámetro
-Si la geometría es correcta pero el arco no coincide, prueba el sentido contrario.
-Eso es diagnóstico técnico.
-
-8. Radio del plano vs radio de herramienta
-Radio del plano (R5, R6)
-≠
-Radio de punta de plaquita
-Plaquitas típicas:
-0.8 → desbaste
-0.4 → acabado
-0.2 → fino
-Se configura en compensación de herramienta.
-
-PARTE 4 — TRIGONOMETRÍA APLICADA A CONOS
-9. Cálculo con ángulos
-Caso:
-Cateto vertical = 7
-Ángulo superior = 30°
-Buscar base (Z)
-Fórmula correcta:
-tan(30°) = base / altura
+La pieza requiere Ø70 mm.
+En el comercio los redondos vienen en pulgadas:
+2"
+2½"
+2¾"
+3"
+etc.
+3 pulgadas = 76.2 mm
+No comprarás Ø70 exacto.
+Trabajarás con Ø76 mm (3”).
 Entonces:
-base = altura × tan(30°)
-tan(30°) = 0.577
-Z = 7 × 0.577
-Z ≈ 4.04 mm
+Material bruto = Ø76 mm
+Ese dato es CRÍTICO para el G71.
 
-Regla mental útil
-Si el ángulo está arriba → multiplicas.
-Si el ángulo está abajo junto a la base → divides.
+3️⃣ ESTRUCTURA BÁSICA DEL PROGRAMA
+Encabezado (Fanuc)
+%
+O0005
+T0101
+G40 G90 G21 G54
+G99 F0.12
+M03 S1500
 
-10. Orden correcto para cálculos de cono
-Restar diámetros
-Dividir entre 2
-Dividir ángulo total entre 2
-Calcular tangente
-Multiplicar
+Encabezado (HNC)
+%
+O0005
+T0101
+G40 G90 G21
+G95 F0.12
+M03 S1500
 
-PARTE 5 — CICLOS AUTOMÁTICOS
-11. G71 (Desbaste)
-Primera línea U:
-→ Controla cuánto baja por pasada
-→ Define número de pasadas
-Segunda línea U:
-→ No baja
-→ Deja material para acabado
+Diferencia clave:
+Fanuc usa G99 → avance por revolución
+HNC usa G95 → avance por revolución
+
+4️⃣ POSICIÓN INICIAL ANTES DEL CICLO
+La herramienta debe ubicarse:
+En diámetro del material bruto
+2 mm delante de la cara
 Ejemplo:
-Objetivo Ø40
-Segunda línea U0.5
-El G71 deja Ø41
-Luego G70 baja de 41 a 40.
-
-RESUMEN TÉCNICO FINAL
-X es diámetro
-2 mm en X = 1 mm real
-Z0 está en la cara frontal
-Z negativo va hacia mordazas
-Desbaste longitudinal va hacia negativo
-G01 X Z = rampa
-Escalones ≠ radio
-Radios solo con G02/G03
-Punto inicial correcto es obligatorio
-G18 es plano del torno
-Sentido del arco determina el resultado
-G71 primera U = cuánto quito
-G71 segunda U = cuánto dejo
-
-Si tienes una cota final en Z-50 y programas:
-G71 P.. Q.. U0.5 W1
-Entonces:
-El desbaste no llegará a Z-50
-
-
-Se quedará en Z-49 (porque W1 deja 1 mm antes en Z)
-
-
-Luego, cuando ejecutas:
-G70 P.. Q..
-El ciclo de acabado sí sigue exactamente el perfil original (el que está entre P y Q) y llega a Z-50 real.
-
-Punto importante
-W siempre actúa en dirección Z
-
-
-No importa si es Z negativo o positivo
-
-
-Simplemente deja material antes del perfil
-
-
-
-Ejemplo claro
-Perfil final:
-Z-50
-Con:
-W0.2
-Desbaste termina en:
-Z-49.8
-Acabado (G70) termina en:
-Z-50.0 exacto
-Así se evita que el desbaste deje marcas profundas en la medida final.
-—---
-En G71, el perfil no es Z2.
-El perfil es únicamente lo que está entre los bloques P y Q.
-En tu programa:
-G71 P40 Q85 ...
-El perfil empieza en N40 y termina en N85.
-
-Entonces ¿qué es Z2?
 G00 X76 Z2
-Eso es solo posición de seguridad antes de empezar el ciclo.
- No hace parte del perfil.
 
-¿Dónde inicia realmente el perfil?
-Aquí:
-N40 G00 X0
-N45 G01 Z0
-El perfil comienza en Z0, que es la cara de la pieza.
- No en Z2.
+Esto le dice al ciclo:
+“Empieza a desbastar desde Ø76”
+Si pones X70 por error,
+la máquina intentará quitar 6 mm en una sola pasada.
 
-Regla clara
-Z2 → posición de aproximación
+5️⃣ CICLO G71 – DESBASTE AUTOMÁTICO
+Fanuc (2 líneas)
+G71 U1.0 R1.0
+G71 P10 Q50 U0.5 W0.2 F0.12
 
+Primera línea
+U = profundidad radial por pasada
+R = retracción
+Si U1.0 → baja 1 mm radial
+→ baja 2 mm en diámetro
 
-Z0 → inicio real de la pieza
+Segunda línea
+P = bloque inicio perfil
+Q = bloque final perfil
+U = sobrematerial en X
+W = sobrematerial en Z
+Aquí está la parte crítica.
 
+6️⃣ SOBREMATERIAL (LO QUE TE ESTABA COSTANDO)
+Hay DOS tipos de U:
+🔹 U primera línea
+Profundidad por pasada
+🔹 U segunda línea
+Sobrematerial en X
+W = sobrematerial en Z
 
-Perfil → bloques entre P y Q
+Regla profesional
+El sobrematerial en X debe ser:
+≥ radio de la herramienta
+Si inserto = R0.4
+Sobrematerial recomendado = 0.5 mm
+Nunca menos que el radio.
+En Z se deja menos:
+0.2 mm es típico.
+Ejemplo correcto:
+G71 U1.0 R1.0
+G71 P10 Q50 U0.5 W0.2
+
+Luego:
+G70 P10 Q50
+
+El G70 elimina ese sobrematerial.
+
+7️⃣ PERFIL ENTRE P Y Q
+Entre P y Q no se programan pasadas.
+Se programa la geometría FINAL de la pieza.
+Ejemplo:
+N10 G01 X54 Z-22
+N20 X40 Z-26.04
+N30 Z-42
+N40 G02 X70 Z-50 R8
+N50 Z-73
+N60 X76
+
+Eso es la forma final.
+El G71 genera automáticamente todas las pasadas.
+
+8️⃣ CÁLCULO GEOMÉTRICO DEL CONO
+Problema:
+El plano no da la longitud del cono.
+Datos:
+Diámetro mayor = 54
+Diámetro menor = 40
+Diferencia = 14 mm
+Pero eso es diámetro.
+Altura radial = 14 ÷ 2 = 7 mm
+Ángulo dado = 60°
+Triángulo rectángulo:
+Un ángulo = 60°
+Otro = 90°
+El tercero = 30°
+Usamos:
+tan(30°) = opuesto / adyacente
+tan(30°) = 7 / X
+X = 7 / tan(30°)
+Resultado:
+X ≈ 4.04 mm
+Entonces:
+Longitud total hasta final del cono:
+22 + 4.04 = 26.04 mm
+Eso es lo que faltaba en el plano.
+
+9️⃣ DIFERENCIA G71 FANUC vs HNC
+Fanuc:
+2 líneas
+U y W para sobrematerial
+HNC:
+1 línea
+Usa X y Z para sobrematerial
+Ejemplo HNC:
+G71 U1.0 R1.0 P10 Q50 X0.5 Z0.2
+
+La lógica es la misma.
+Solo cambia la sintaxis.
+
+🔟 CAMBIO MENTAL CLAVE
+Antes:
+Programabas cada pasada.
+Ahora:
+Defines parámetros.
+El control calcula todo.
+Eso es programación por ciclo.
+
+🧠 LO QUE DEBES DOMINAR
+✔ X trabaja en diámetro
+✔ U línea 1 = profundidad radial
+✔ U línea 2 = sobrematerial en X
+✔ W = sobrematerial en Z
+✔ P y Q delimitan geometría
+✔ G70 elimina sobrematerial
+✔ Conos se calculan con trigonometría radial
