@@ -187,3 +187,58 @@ Eso es programación por ciclo.
 ✔ P y Q delimitan geometría
 ✔ G70 elimina sobrematerial
 ✔ Conos se calculan con trigonometría radial
+
+11 :
+
+Explicación directa y simple para **torno CNC**:
+
+**Eje Z (longitud de la pieza)**
+
+* `Z0` = la **cara frontal de la pieza**.
+* Los valores **negativos en Z** (`Z-10`, `Z-40`, etc.) van **hacia adentro del material**.
+* Por eso el desbaste normalmente se hace **desde Z0 hasta el valor negativo que indique el plano**.
+
+Ejemplo:
+
+```
+Z0  → inicio en la cara de la pieza
+Z-40 → final del desbaste hacia adentro
+```
+
+**Eje X (posición de la herramienta respecto al diámetro)**
+
+Según lo que indicas:
+
+* **Número X menor → la herramienta (buril) está más arriba, sin tocar o tocando menos el material.**
+* **Número X mayor → la herramienta baja más y entra más en el material, por lo que corta más.**
+
+Ejemplo:
+
+```
+X30 → buril más arriba
+X40 → baja más
+X50 → baja todavía más y corta más material
+```
+
+**Regla rápida**
+
+* `Z0` → cara de la pieza.
+* `Z negativo` → avance hacia dentro de la pieza.
+* `X pequeño` → herramienta más arriba (menos contacto).
+* `X grande` → herramienta baja más y corta más material.
+
+**Ejemplo simple**
+
+```
+G00 X30 Z2
+G01 Z0
+G01 X45
+G01 Z-40
+```
+
+Significado:
+
+1. La herramienta se posiciona arriba de la pieza (`X30`).
+2. Va a la cara (`Z0`).
+3. Baja (`X45`) hasta tocar y cortar el material.
+4. Desbasta hacia adentro hasta `Z-40`.
